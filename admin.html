@@ -248,12 +248,20 @@ function renderRespostas(){
   const rows = !q ? RESP : RESP.filter(r => JSON.stringify(r).toLowerCase().includes(q));
   $("#respCount").textContent = `${rows.length} resposta(s)` + (q ? ` (de ${RESP.length})` : "");
   const thead = $("#respTable thead"), tbody = $("#respTable tbody");
-  thead.innerHTML = "<tr>" + COLS.map(c=>`<th>${esc(c[1])}</th>`).join("") + "</tr>";
-  if (!rows.length){ tbody.innerHTML = `<tr><td colspan="${COLS.length}"><div class="empty">Nenhuma resposta ainda.</div></td></tr>`; return; }
+  thead.innerHTML = "<tr>" + COLS.map(c=>`<th>${esc(c[1])}</th>`).join("") + "<th>Ações</th></tr>";
+  if (!rows.length){ tbody.innerHTML = `<tr><td colspan="${COLS.length+1}"><div class="empty">Nenhuma resposta ainda.</div></td></tr>`; return; }
   tbody.innerHTML = rows.map(r => "<tr>" + COLS.map(c=>{
     const long = ["metas","desafios","nicho","atribuicao_mentor_lideres"].includes(c[0]);
     return `<td class="${long?'wrap':''}">${fmtVal(c[0], r[c[0]])}</td>`;
-  }).join("") + "</tr>").join("");
+  }).join("") + `<td><button class="btn btn--danger btn--sm" data-del="${esc(r.id)}">Excluir</button></td></tr>`).join("");
+  tbody.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
+    if(!confirm("Excluir esta resposta? Esta ação não pode ser desfeita.")) return;
+    b.disabled = true; b.textContent = "Excluindo…";
+    const { error } = await sb.from("mbm_respostas").delete().eq("id", b.dataset.del);
+    if(error){ alert("Erro ao excluir: " + error.message); b.disabled = false; b.textContent = "Excluir"; return; }
+    RESP = RESP.filter(x => x.id !== b.dataset.del);
+    renderRespostas();
+  });
 }
 $("#respSearch").addEventListener("input", renderRespostas);
 $("#btnReload").onclick = loadRespostas;
