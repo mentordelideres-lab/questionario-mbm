@@ -318,6 +318,12 @@ const LETTERS = "ABCDEFGHIJ";
 const answers = {};
 let idx = 0;
 
+/* ---- salvamento de progresso (por navegador) ---- */
+const SAVE_KEY = "mbm_form_progresso_v1";
+function saveProgress(){ try { localStorage.setItem(SAVE_KEY, JSON.stringify({ idx, answers, ts: Date.now() })); } catch(e){} }
+function loadProgress(){ try { return JSON.parse(localStorage.getItem(SAVE_KEY) || "null"); } catch(e){ return null; } }
+function clearProgress(){ try { localStorage.removeItem(SAVE_KEY); } catch(e){} }
+
 let displayNo = [];
 function computeNos(){
   displayNo = []; let n = 0;
@@ -328,6 +334,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">"
 
 function render() {
   const q = QUESTIONS[idx];
+  if (q.type !== "end") saveProgress();
   const total = Math.max(1, QUESTIONS.length - 1);
   bar.style.width = (q.type === "end" ? 100 : Math.min(100, (idx / total) * 100)) + "%";
   navUp.disabled = idx === 0;
@@ -402,6 +409,7 @@ function render() {
     inp.addEventListener("keydown", e => {
       if (e.key === "Enter" && !(q.type === "long" && e.shiftKey)) { e.preventDefault(); submitCurrent(); }
     });
+    inp.addEventListener("input", () => { answers[q.id] = inp.value; saveProgress(); });
   }
 
   const opts = frame.querySelector("#opts");
@@ -412,10 +420,12 @@ function render() {
         opts.querySelectorAll(".mbm-opt").forEach(b => b.classList.remove("is-on"));
         btn.classList.add("is-on");
         answers[q.id] = i;
+        saveProgress();
         setTimeout(submitCurrent, 190);
       } else {
         btn.classList.toggle("is-on");
         answers[q.id] = [...opts.querySelectorAll(".mbm-opt.is-on")].map(b => +b.dataset.i);
+        saveProgress();
       }
     };
   });
@@ -467,6 +477,7 @@ async function submitToSupabase() {
       body: JSON.stringify(buildPayload()),
     });
     if (!res.ok) throw new Error("HTTP " + res.status);
+    clearProgress();   // enviado com sucesso: limpa o rascunho
     // sucesso: silencioso
   } catch (e) {
     sent = false;
@@ -513,6 +524,12 @@ async function iniciar(){
   const doBanco = await carregarPerguntas();
   if (doBanco) QUESTIONS = doBanco;
   computeNos();
+  // retoma de onde parou (mesmo navegador), se houver rascunho
+  const saved = loadProgress();
+  if (saved && Number.isInteger(saved.idx)) {
+    if (saved.answers && typeof saved.answers === "object") Object.assign(answers, saved.answers);
+    idx = Math.min(Math.max(0, saved.idx), QUESTIONS.length - 1);
+  }
   render();
 }
 iniciar();
