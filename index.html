@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Questionário MBM — Renovação</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ============ TOKENS MBM (extraídos do pitch deck oficial) ============ */
+  :root {
+    --mbm-bg-deep:    #030615;
+    --mbm-bg-navy:    #061322;
+    --mbm-bg-ink:     #04101c;
+    --mbm-teal-glow:  40 99 115;   /* rgb do glow superior */
+    --mbm-teal-glow2: 33 84 101;   /* rgb do glow inferior */
+    --mbm-accent:     #00a8ef;     /* azul elétrico da marca */
+    --mbm-accent-hov: #2bbcf8;
+    --mbm-accent-dp:  #0b7fc0;
+    --mbm-on-accent:  #04121f;
+    --mbm-ink:        #f2f7fb;
+    --mbm-ink-body:   #eaf2f8;
+    --mbm-ink-soft:   #9bb0c4;
+    --mbm-ink-mute:   #8fa6bb;
+    --mbm-ink-faint:  #5b7081;
+    --mbm-placeholder:#4a6076;
+    --mbm-danger:     #f08f8f;
+    --mbm-line:       rgba(0,168,239,.30);
+    --mbm-card:       rgba(255,255,255,.035);
+    --mbm-card-line:  rgba(255,255,255,.12);
+    --mbm-card-hov:   rgba(0,168,239,.10);
+    --mbm-card-on:    rgba(0,168,239,.16);
+    --mbm-serif: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+    --mbm-sans:  "Jost", "Helvetica Neue", Helvetica, sans-serif;
+    --mbm-ease:  cubic-bezier(.22,.61,.36,1);
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: var(--mbm-sans);
+    color: var(--mbm-ink-body);
+    background: var(--mbm-bg-deep);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--mbm-accent); text-decoration: none; }
+  a:hover { color: #6fcdf8; }
+  input::placeholder, textarea::placeholder { color: var(--mbm-placeholder); }
+
+  .mbm-stage {
+    min-height: 100vh; display: flex; flex-direction: column;
+    position: relative; overflow: hidden;
+    background:
+      radial-gradient(85% 70% at 2% 0%,   rgba(var(--mbm-teal-glow) / .55), transparent 60%),
+      radial-gradient(70% 60% at 100% 100%, rgba(var(--mbm-teal-glow2) / .50), transparent 62%),
+      linear-gradient(170deg, var(--mbm-bg-navy) 0%, var(--mbm-bg-deep) 55%, var(--mbm-bg-ink) 100%);
+  }
+
+  /* progresso */
+  .mbm-progress { position: fixed; inset: 0 0 auto 0; height: 3px; background: rgba(255,255,255,.07); z-index: 20; }
+  .mbm-progress__bar {
+    height: 100%; width: 0;
+    background: linear-gradient(90deg, var(--mbm-accent-dp), var(--mbm-accent));
+    box-shadow: 0 0 14px rgba(0,168,239,.55);
+    transition: width .45s var(--mbm-ease);
+  }
+
+  /* cabeçalho */
+  .mbm-header { display: flex; align-items: center; gap: 18px; padding: 26px clamp(20px,6vw,76px) 0; }
+  .mbm-header img { height: 46px; width: auto; display: block; }
+  /* fallback textual da logo (caso assets/mbm-logo.png não esteja presente) */
+  .mbm-logo-fallback { display: flex; align-items: center; gap: 14px; }
+  .mbm-logo-fallback__mark {
+    width: 42px; height: 42px; border: 1.5px solid rgba(242,247,251,.55);
+    display: grid; place-items: center; border-radius: 3px;
+    font-family: var(--mbm-serif); font-weight: 600; font-size: 16px; color: var(--mbm-ink);
+  }
+  .mbm-logo-fallback__name { font-size: 9px; line-height: 1.35; letter-spacing: .3em; text-transform: uppercase; color: var(--mbm-ink-soft); }
+
+  .mbm-main { flex: 1; display: flex; align-items: center; padding: 24px clamp(20px,6vw,76px) 110px; }
+  .mbm-frame { width: 100%; max-width: 780px; margin: 0 auto; }
+
+  .mbm-card { animation: mbmRise .55s var(--mbm-ease) both; }
+  @keyframes mbmRise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+
+  /* pergunta */
+  .mbm-qhead { display: flex; gap: 14px; align-items: baseline; }
+  .mbm-qnum {
+    flex: none; display: inline-flex; align-items: center; gap: 5px;
+    color: var(--mbm-accent); font-size: 15px; font-variant-numeric: tabular-nums; padding-top: .35em;
+  }
+  .mbm-qnum svg { width: 10px; height: 10px; opacity: .85; }
+  .mbm-qtitle {
+    font-family: var(--mbm-serif); font-weight: 500;
+    font-size: clamp(1.65rem, 4.4vw, 2.5rem); line-height: 1.16;
+    margin: 0; color: var(--mbm-ink); text-wrap: balance;
+  }
+  .mbm-qtitle .req { color: var(--mbm-accent); margin-left: 3px; }
+  .mbm-qhelp {
+    color: var(--mbm-ink-mute); font-weight: 300;
+    font-size: clamp(.92rem, 2.2vw, 1.02rem); line-height: 1.55;
+    margin: 14px 0 0 30px; max-width: 60ch; text-wrap: pretty;
+  }
+  .mbm-qbody { margin-top: clamp(30px, 5vw, 46px); }
+
+  /* campos */
+  .mbm-input, .mbm-textarea {
+    width: 100%; background: transparent; border: none;
+    border-bottom: 2px solid var(--mbm-line);
+    color: var(--mbm-ink-body); font-family: var(--mbm-sans); font-weight: 300;
+    padding: 6px 2px 13px; outline: none; transition: border-color .2s;
+  }
+  .mbm-input    { font-size: clamp(1.2rem, 3.4vw, 1.65rem); }
+  .mbm-textarea { font-size: clamp(1.15rem, 3.1vw, 1.5rem); line-height: 1.45; resize: none; overflow: hidden; }
+  .mbm-input:focus, .mbm-textarea:focus { border-bottom-color: var(--mbm-accent); }
+  .mbm-hint { margin-top: 14px; font-size: .78rem; letter-spacing: .04em; color: var(--mbm-ink-faint); }
+  .mbm-hint b { color: var(--mbm-ink-mute); font-weight: 500; }
+
+  /* opções */
+  .mbm-note { margin: 0 0 16px; color: var(--mbm-ink-mute); font-size: .88rem; font-weight: 300; letter-spacing: .02em; }
+  .mbm-opts { display: flex; flex-direction: column; gap: 10px; max-width: 580px; }
+  .mbm-opt {
+    display: flex; align-items: center; gap: 14px; width: 100%; text-align: left;
+    background: var(--mbm-card); border: 1px solid var(--mbm-card-line); border-radius: 6px;
+    padding: 16px 17px; cursor: pointer; color: var(--mbm-ink-body);
+    font-family: var(--mbm-sans); font-weight: 300; font-size: clamp(.98rem, 2.6vw, 1.1rem);
+    transition: background .15s, border-color .15s, transform .06s;
+  }
+  .mbm-opt:hover  { background: var(--mbm-card-hov); border-color: rgba(0,168,239,.45); }
+  .mbm-opt:active { transform: scale(.995); }
+  .mbm-opt.is-on  { background: var(--mbm-card-on); border-color: var(--mbm-accent); }
+  .mbm-opt__key {
+    flex: none; width: 25px; height: 25px; display: grid; place-items: center;
+    border: 1px solid rgba(255,255,255,.14); border-radius: 4px;
+    font-size: .74rem; font-weight: 500; letter-spacing: .04em; color: var(--mbm-ink-mute);
+    transition: background .15s, border-color .15s, color .15s;
+  }
+  .mbm-opt.is-on .mbm-opt__key { background: var(--mbm-accent); border-color: var(--mbm-accent); color: var(--mbm-on-accent); }
+
+  /* statement */
+  .mbm-eyebrow { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .mbm-eyebrow i { width: 26px; height: 1px; background: var(--mbm-accent); }
+  .mbm-eyebrow span { font-size: 10px; letter-spacing: .3em; text-transform: uppercase; color: var(--mbm-accent); }
+  .mbm-stitle {
+    font-family: var(--mbm-serif); font-weight: 500;
+    font-size: clamp(1.9rem, 5.2vw, 2.9rem); line-height: 1.12; margin: 0;
+    color: var(--mbm-ink); text-wrap: balance;
+  }
+  .mbm-shelp {
+    color: var(--mbm-ink-soft); font-weight: 300;
+    font-size: clamp(.98rem, 2.4vw, 1.1rem); line-height: 1.65;
+    margin: 20px 0 0; max-width: 58ch; text-wrap: pretty;
+  }
+
+  /* ações */
+  .mbm-actions { margin-top: clamp(30px, 5vw, 42px); display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+  .mbm-btn {
+    appearance: none; border: none; cursor: pointer;
+    font-family: var(--mbm-sans); font-weight: 500; font-size: 1rem; letter-spacing: .04em;
+    padding: 14px 32px; border-radius: 4px;
+    background: var(--mbm-accent); color: var(--mbm-on-accent);
+    transition: background .15s, transform .06s;
+  }
+  .mbm-btn:hover  { background: var(--mbm-accent-hov); }
+  .mbm-btn:active { transform: translateY(1px); }
+  .mbm-btn:focus-visible { outline: 2px solid var(--mbm-ink-body); outline-offset: 3px; }
+  .mbm-btn[disabled] { opacity: .55; cursor: default; }
+  .mbm-enter { font-size: .78rem; letter-spacing: .04em; color: var(--mbm-ink-faint); }
+  .mbm-enter b { color: var(--mbm-ink-mute); font-weight: 500; }
+  .mbm-err { color: var(--mbm-danger); font-size: .84rem; font-weight: 300; margin-top: 14px; min-height: 1.2em; }
+
+  /* nav */
+  .mbm-nav { position: fixed; right: clamp(14px,4vw,30px); bottom: 22px; display: flex; gap: 1px; z-index: 15; }
+  .mbm-nav button {
+    width: 44px; height: 39px; display: grid; place-items: center;
+    background: rgba(0,168,239,.12); border: 1px solid var(--mbm-line);
+    color: var(--mbm-accent); cursor: pointer; transition: background .15s, opacity .15s;
+  }
+  .mbm-nav button:first-child { border-radius: 5px 0 0 5px; }
+  .mbm-nav button:last-child  { border-radius: 0 5px 5px 0; }
+  .mbm-nav button:hover:not(:disabled) { background: rgba(0,168,239,.24); }
+  .mbm-nav button:disabled { opacity: .32; cursor: default; }
+  .mbm-nav svg { width: 16px; height: 16px; }
+
+  /* tela final */
+  .mbm-end { text-align: center; max-width: 620px; margin: 0 auto; }
+  .mbm-end__kicker { font-size: 10px; letter-spacing: .38em; text-transform: uppercase; color: var(--mbm-accent); margin-bottom: 22px; }
+  .mbm-end__title {
+    font-family: var(--mbm-serif); font-weight: 500;
+    font-size: clamp(2.3rem, 7vw, 3.5rem); line-height: 1.05;
+    margin: 0 0 18px; color: var(--mbm-ink-body);
+  }
+  .mbm-end__sub { color: var(--mbm-ink-mute); font-weight: 300; font-size: clamp(1rem, 2.6vw, 1.15rem); line-height: 1.6; margin: 0; }
+  .mbm-end__status { color: var(--mbm-danger); font-size: .92rem; font-weight: 300; margin: 24px 0 0; min-height: 1.2em; }
+
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="mbm-progress" aria-hidden="true"><div class="mbm-progress__bar" id="bar"></div></div>
+
+<div class="mbm-stage">
+  <header class="mbm-header">
+    <img src="assets/mbm-logo.png" alt="Master Business Mentoring"
+         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+    <div class="mbm-logo-fallback" style="display:none">
+      <div class="mbm-logo-fallback__mark">MBM</div>
+      <div class="mbm-logo-fallback__name">Master<br>Business<br>Mentoring</div>
+    </div>
+  </header>
+  <main class="mbm-main">
+    <div class="mbm-frame" id="frame"></div>
+  </main>
+</div>
+
+<div class="mbm-nav">
+  <button id="navUp" title="Anterior" aria-label="Pergunta anterior">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+  </button>
+  <button id="navDown" title="Próxima" aria-label="Próxima pergunta">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </button>
+</div>
+
+<script>
+/* ================================================================
+   CONEXÃO COM O SUPABASE — onde as respostas são gravadas.
+   Projeto "PCE 2.0" · tabela public.mbm_respostas · chave pública (anon).
+   O envio funciona com o formulário hospedado no SEU site/servidor.
+   ================================================================ */
+const SUPABASE = {
+  url:   "https://avhhreybvcbgqacbvjgm.supabase.co",
+  anon:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2aGhyZXlidmNiZ3FhY2J2amdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwODgyMDQsImV4cCI6MjA5MzY2NDIwNH0.h_RkqqnXVfo-a_rSEdQ64Gfn599Jx9E8adTEwQU3QJI",
+  table: "mbm_respostas",
+};
+
+/* ================================================================
+   PERGUNTAS — fonte única de verdade do formulário. Edite à vontade.
+
+   Campos de cada item:
+     id       : chave interna da resposta
+     type     : "text" | "long" | "single" | "multi" | "statement" | "end"
+     title    : enunciado
+     help     : (opcional) linha de apoio
+     eyebrow  : (só "statement") rótulo pequeno acima do título
+     note     : (só "multi") texto da nota
+     options  : (single/multi) lista de opções
+     required : true/false
+     numeric  : true → teclado numérico (mantém zeros à esquerda)
+     cta      : rótulo do botão
+     field    : COLUNA no Supabase onde grava (o que impede o dado de se perder)
+   "statement" só avança; "end" encerra e dispara o envio.
+   ================================================================ */
+const QUESTIONS = [
+  { id:"nome", type:"text", required:true, field:"nome_completo",
+    title:"Qual é o seu nome completo?" },
+  { id:"cpf", type:"text", numeric:true, required:true, field:"cpf",
+    title:"Qual é o seu CPF?",
+    help:"Digite apenas os números, incluindo zeros à esquerda." },
+  { id:"mentoria_nome", type:"text", required:true, field:"mentoria",
+    title:"Qual é o nome da sua mentoria ou programa?" },
+  { id:"nicho", type:"text", required:true, field:"nicho",
+    title:"Qual é o nicho ou tema principal da sua mentoria?",
+    help:"Ex.: gestão empresarial, emagrecimento, finanças, espiritualidade, vendas…" },
+  { id:"formato", type:"multi", required:true, field:"formato_entrega",
+    title:"Qual é o formato de entrega da sua mentoria High Ticket?",
+    note:"Pode selecionar várias opções",
+    options:["Individual","Em grupo","Online","Presencial","Híbrido"] },
+  { id:"ticket", type:"single", required:true, field:"ticket_medio",
+    title:"Qual é o valor (ticket médio) da sua mentoria?",
+    options:["R$ 25K a R$ 55K","R$ 55K a R$ 85K","R$ 85K a R$ 150K","Outro"] },
+  { id:"mentorados_ativos", type:"text", numeric:true, required:true, field:"mentorados_ativos",
+    title:"Quantos mentorados ou alunos ativos você tem atualmente?" },
+  { id:"fat_2025", type:"text", required:true, field:"faturamento_2025",
+    title:"Qual foi o seu faturamento com produtos educacionais em 2025?",
+    help:"Produtos educacionais = palestras, treinamentos, cursos, mentorias, workshops etc." },
+  { id:"fat_2026_parcial", type:"text", required:true, field:"faturamento_2026",
+    title:"E o seu faturamento com produtos educacionais em 2026, até o momento?",
+    help:"Produtos educacionais = palestras, treinamentos, cursos, mentorias, workshops etc." },
+  { id:"atribuicao_mentor_lideres", type:"text", required:true, field:"atribuicao_mentor_lideres",
+    title:"Desse faturamento, quanto você atribui ao que aprendeu e aplicou a partir do Mentor de Líderes?",
+    help:"Pode responder em valor (R$) ou em percentual aproximado." },
+  { id:"projecao_2026", type:"text", required:true, field:"projecao_2026",
+    title:"Qual é a projeção de fechamento de 2026 para os seus produtos educacionais?",
+    help:"Produtos educacionais = palestras, treinamentos, cursos, mentorias, workshops etc." },
+  { id:"parceria_pv", type:"single", required:true, field:"intencao_parceria",
+    title:"Você tem a intenção de se tornar parceiro do Paulo Vieira?",
+    options:["Sim, é um objetivo claro para mim","Talvez — gostaria de entender melhor como funciona","Não no momento"] },
+  { id:"metas", type:"long", required:true, field:"metas",
+    title:"Quais são as suas principais metas para este novo ciclo no ecossistema MBM?" },
+  { id:"desafios", type:"long", required:true, field:"desafios",
+    title:"Quais são os seus maiores desafios no negócio hoje?" },
+
+  { id:"aviso_interbusiness", type:"statement", cta:"Continuar",
+    eyebrow:"Entrega presencial · Confirmação de presença",
+    title:"InterBusiness · 10 a 12 de dezembro de 2026",
+    help:"Três dias de imersão presencial com os maiores nomes nacionais e internacionais em mentoria, branding, vendas e escala. Como aluno renovado, a sua participação já está contemplada." },
+  { id:"presenca_interbusiness", type:"single", required:true, cta:"Enviar", field:"confirma_interbusiness",
+    title:"Você confirma a sua presença no InterBusiness?",
+    options:["Sim, confirmo minha presença","Não poderei comparecer","Ainda não tenho certeza"] },
+
+  { id:"fim", type:"end",
+    title:"Obrigado por responder!",
+    help:"As suas respostas nos ajudam a personalizar a sua jornada no Master Business Mentoring. O seu Consultor entrará em contato com os próximos passos." },
+];
+
+/* ---------------- motor ---------------- */
+const frame = document.getElementById("frame");
+const bar = document.getElementById("bar");
+const navUp = document.getElementById("navUp");
+const navDown = document.getElementById("navDown");
+const LETTERS = "ABCDEFGHIJ";
+const answers = {};
+let idx = 0;
+
+const displayNo = [];
+let n = 0;
+QUESTIONS.forEach(q => displayNo.push(q.type === "statement" || q.type === "end" ? null : ++n));
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;" }[c]));
+
+function render() {
+  const q = QUESTIONS[idx];
+  const total = Math.max(1, QUESTIONS.length - 1);
+  bar.style.width = (q.type === "end" ? 100 : Math.min(100, (idx / total) * 100)) + "%";
+  navUp.disabled = idx === 0;
+  navDown.disabled = idx >= QUESTIONS.length - 1;
+
+  if (q.type === "end") {
+    frame.innerHTML = `<div class="mbm-card mbm-end">
+      <div class="mbm-end__kicker">Master Business Mentoring</div>
+      <h1 class="mbm-end__title">${esc(q.title)}</h1>
+      ${q.help ? `<p class="mbm-end__sub">${esc(q.help)}</p>` : ""}
+      <p class="mbm-end__status" id="endStatus"></p>
+    </div>`;
+    submitToSupabase();
+    return;
+  }
+
+  if (q.type === "statement") {
+    frame.innerHTML = `<div class="mbm-card">
+      ${q.eyebrow ? `<div class="mbm-eyebrow"><i></i><span>${esc(q.eyebrow)}</span></div>` : ""}
+      <h2 class="mbm-stitle">${esc(q.title)}</h2>
+      ${q.help ? `<p class="mbm-shelp">${esc(q.help)}</p>` : ""}
+      <div class="mbm-actions"><button class="mbm-btn" data-ok>${esc(q.cta || "Continuar")}</button></div>
+    </div>`;
+    frame.querySelector("[data-ok]").onclick = next;
+    return;
+  }
+
+  const head = `<div class="mbm-qhead">
+      <span class="mbm-qnum">${displayNo[idx]}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </span>
+      <h1 class="mbm-qtitle">${esc(q.title)}${q.required ? '<span class="req">*</span>' : ''}</h1>
+    </div>
+    ${q.help ? `<p class="mbm-qhelp">${esc(q.help)}</p>` : ""}`;
+
+  let body = "";
+  const saved = answers[q.id];
+
+  if (q.type === "text") {
+    body = `<input id="inp" class="mbm-input" type="text" ${q.numeric ? 'inputmode="numeric"' : ''} autocomplete="off" placeholder="Responda aqui..." value="${saved ? esc(saved) : ""}">`;
+  } else if (q.type === "long") {
+    body = `<textarea id="inp" class="mbm-textarea" rows="1" placeholder="Responda aqui...">${saved ? esc(saved) : ""}</textarea>
+      <div class="mbm-hint">Pressione <b>Shift</b> + <b>Enter</b> para quebrar linha</div>`;
+  } else {
+    const sel = Array.isArray(saved) ? saved : (saved != null ? [saved] : []);
+    const note = q.type === "multi" ? `<p class="mbm-note">${esc(q.note || "Pode selecionar várias opções")}</p>` : "";
+    body = note + '<div class="mbm-opts" id="opts">' + q.options.map((o, i) =>
+      `<button class="mbm-opt${sel.includes(i) ? " is-on" : ""}" data-i="${i}">
+        <span class="mbm-opt__key">${LETTERS[i]}</span><span>${esc(o)}</span>
+      </button>`).join("") + "</div>";
+  }
+
+  frame.innerHTML = `<div class="mbm-card">
+    ${head}
+    <div class="mbm-qbody">${body}</div>
+    <div class="mbm-actions">
+      <button class="mbm-btn" data-ok>${esc(q.cta || "OK")}</button>
+      <span class="mbm-enter">pressione <b>Enter ↵</b></span>
+    </div>
+    <div class="mbm-err" id="err"></div>
+  </div>`;
+
+  frame.querySelector("[data-ok]").onclick = submitCurrent;
+
+  const inp = frame.querySelector("#inp");
+  if (inp) {
+    inp.focus();
+    if (q.type === "long") {
+      const grow = () => { inp.style.height = "auto"; inp.style.height = inp.scrollHeight + "px"; };
+      inp.addEventListener("input", grow); grow();
+    }
+    inp.addEventListener("keydown", e => {
+      if (e.key === "Enter" && !(q.type === "long" && e.shiftKey)) { e.preventDefault(); submitCurrent(); }
+    });
+  }
+
+  const opts = frame.querySelector("#opts");
+  if (opts) opts.querySelectorAll(".mbm-opt").forEach(btn => {
+    btn.onclick = () => {
+      const i = +btn.dataset.i;
+      if (q.type === "single") {
+        opts.querySelectorAll(".mbm-opt").forEach(b => b.classList.remove("is-on"));
+        btn.classList.add("is-on");
+        answers[q.id] = i;
+        setTimeout(submitCurrent, 190);
+      } else {
+        btn.classList.toggle("is-on");
+        answers[q.id] = [...opts.querySelectorAll(".mbm-opt.is-on")].map(b => +b.dataset.i);
+      }
+    };
+  });
+}
+
+function submitCurrent() {
+  const q = QUESTIONS[idx];
+  const err = document.getElementById("err");
+  const inp = frame.querySelector("#inp");
+  if (inp) answers[q.id] = inp.value.trim();
+
+  if (q.required) {
+    const a = answers[q.id];
+    const empty = a == null || a === "" || (Array.isArray(a) && a.length === 0);
+    if (empty) { if (err) err.textContent = "Esta pergunta é obrigatória."; if (inp) inp.focus(); return; }
+  }
+  next();
+}
+
+/* ---- monta o payload (por coluna) e envia ao Supabase ---- */
+function buildPayload() {
+  const row = { respostas: {}, user_agent: navigator.userAgent };
+  QUESTIONS.forEach(q => {
+    if (!q.field) return;
+    let val = answers[q.id];
+    if (val == null) return;
+    if (q.type === "single") val = (q.options || [])[val] ?? null;
+    else if (q.type === "multi") val = (val || []).map(k => q.options[k]);
+    row[q.field] = val;
+    row.respostas[q.field] = val;
+  });
+  return row;
+}
+
+let sent = false;
+async function submitToSupabase() {
+  if (sent) return;
+  sent = true;
+  const status = document.getElementById("endStatus");
+  try {
+    const res = await fetch(`${SUPABASE.url}/rest/v1/${SUPABASE.table}`, {
+      method: "POST",
+      headers: {
+        "apikey": SUPABASE.anon,
+        "Authorization": `Bearer ${SUPABASE.anon}`,
+        "Content-Type": "application/json",
+        "Prefer": "return=minimal",
+      },
+      body: JSON.stringify(buildPayload()),
+    });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    // sucesso: silencioso
+  } catch (e) {
+    sent = false;
+    if (status) {
+      status.textContent = "Não foi possível registrar sua resposta agora. ";
+      const retry = document.createElement("button");
+      retry.className = "mbm-btn"; retry.textContent = "Tentar novamente"; retry.style.marginTop = "14px";
+      retry.onclick = () => { status.textContent = ""; submitToSupabase(); };
+      status.appendChild(document.createElement("br"));
+      status.appendChild(retry);
+    }
+    console.error("[MBM] falha ao enviar ao Supabase:", e);
+  }
+}
+
+function next() { if (idx < QUESTIONS.length - 1) { idx++; render(); } }
+function prev() { if (idx > 0) { idx--; render(); } }
+
+navDown.onclick = () => {
+  const q = QUESTIONS[idx];
+  (q.type === "statement" || q.type === "end") ? next() : submitCurrent();
+};
+navUp.onclick = prev;
+
+render();
+</script>
+</body>
+</html>
