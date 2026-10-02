@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel MBM — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#030615; --bg-navy:#061322; --bg-ink:#04101c;
+    --accent:#00a8ef; --accent-hov:#2bbcf8; --accent-dp:#0b7fc0; --on-accent:#04121f;
+    --ink:#f2f7fb; --ink-body:#eaf2f8; --ink-soft:#9bb0c4; --ink-mute:#8fa6bb; --ink-faint:#5b7081;
+    --danger:#f08f8f; --ok:#67d58f;
+    --line:rgba(0,168,239,.30); --card:rgba(255,255,255,.035); --card-line:rgba(255,255,255,.12);
+    --serif:"Cormorant Garamond",Georgia,serif; --sans:"Jost","Helvetica Neue",Helvetica,sans-serif;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;font-family:var(--sans);font-weight:300;color:var(--ink-body);
+    background:radial-gradient(80% 60% at 2% 0%,rgba(40,99,115,.5),transparent 60%),linear-gradient(170deg,var(--bg-navy),var(--bg-deep) 60%,var(--bg-ink));
+    background-attachment:fixed;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none}
+  button{font-family:var(--sans);cursor:pointer}
+  input,select,textarea{font-family:var(--sans)}
+  .wrap{max-width:1120px;margin:0 auto;padding:24px clamp(16px,4vw,40px) 80px}
+
+  /* ---- login ---- */
+  .login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+  .login__card{width:100%;max-width:380px}
+  .brand{display:flex;align-items:center;gap:13px;margin-bottom:34px}
+  .brand__mark{width:40px;height:40px;border:1.5px solid rgba(242,247,251,.55);border-radius:3px;display:grid;place-items:center;font-family:var(--serif);font-weight:600;font-size:15px;color:var(--ink)}
+  .brand__name{font-size:9px;line-height:1.35;letter-spacing:.3em;text-transform:uppercase;color:var(--ink-soft)}
+  .login h1{font-family:var(--serif);font-weight:500;font-size:1.9rem;margin:0 0 6px;color:var(--ink)}
+  .login p.sub{color:var(--ink-mute);margin:0 0 26px;font-size:.95rem}
+  .field{margin-bottom:16px}
+  .field label{display:block;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:7px}
+  .inp{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--card-line);border-radius:6px;color:var(--ink-body);font-size:1rem;font-weight:300;padding:12px 13px;outline:none;transition:border-color .15s}
+  .inp:focus{border-color:var(--accent)}
+  .btn{background:var(--accent);color:var(--on-accent);border:none;border-radius:6px;font-weight:500;letter-spacing:.03em;padding:12px 22px;transition:background .15s}
+  .btn:hover{background:var(--accent-hov)}
+  .btn:disabled{opacity:.5;cursor:default}
+  .btn--ghost{background:transparent;color:var(--ink-mute);border:1px solid var(--card-line)}
+  .btn--ghost:hover{background:rgba(255,255,255,.05);color:var(--ink-body)}
+  .btn--sm{padding:7px 13px;font-size:.84rem;border-radius:5px}
+  .btn--danger{background:transparent;color:var(--danger);border:1px solid rgba(240,143,143,.4)}
+  .btn--danger:hover{background:rgba(240,143,143,.12)}
+  .msg{font-size:.85rem;margin-top:14px;min-height:1.1em}
+  .msg.err{color:var(--danger)} .msg.ok{color:var(--ok)}
+
+  /* ---- topo ---- */
+  .top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;border-bottom:1px solid var(--card-line);padding-bottom:18px;margin-bottom:24px}
+  .top__user{font-size:.85rem;color:var(--ink-mute)}
+  .tabs{display:flex;gap:6px;margin-bottom:22px;flex-wrap:wrap}
+  .tab{background:transparent;border:1px solid var(--card-line);color:var(--ink-mute);border-radius:6px;padding:9px 16px;font-size:.9rem;font-weight:400}
+  .tab.is-on{background:rgba(0,168,239,.14);border-color:var(--accent);color:var(--ink)}
+
+  .bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+  .bar .count{color:var(--ink-mute);font-size:.9rem}
+  .bar .grow{flex:1}
+  .search{min-width:220px;max-width:360px;flex:1}
+
+  /* ---- tabela respostas ---- */
+  .tablewrap{overflow-x:auto;border:1px solid var(--card-line);border-radius:8px}
+  table{border-collapse:collapse;width:100%;font-size:.88rem}
+  th,td{text-align:left;padding:11px 13px;border-bottom:1px solid rgba(255,255,255,.07);white-space:nowrap}
+  th{position:sticky;top:0;background:#0a1626;color:var(--ink-soft);font-weight:500;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase}
+  tbody tr:hover{background:rgba(0,168,239,.06)}
+  td.wrap{white-space:normal;max-width:320px;color:var(--ink-mute)}
+  .tag{display:inline-block;background:rgba(0,168,239,.14);color:#bfe4fb;border-radius:4px;padding:2px 8px;font-size:.78rem;margin:1px 3px 1px 0}
+  .empty{padding:40px;text-align:center;color:var(--ink-mute)}
+
+  /* ---- editor perguntas ---- */
+  .q{border:1px solid var(--card-line);border-radius:8px;padding:16px 16px 6px;margin-bottom:14px;background:var(--card)}
+  .q.inativa{opacity:.55}
+  .q__head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .q__ord{font-variant-numeric:tabular-nums;color:var(--accent);font-size:.9rem;min-width:22px}
+  .q__type{font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);border:1px solid var(--card-line);border-radius:4px;padding:3px 8px}
+  .q__grow{flex:1}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .grid .full{grid-column:1/-1}
+  @media(max-width:620px){.grid{grid-template-columns:1fr}}
+  .lbl{display:block;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 6px}
+  .ta{min-height:46px;resize:vertical}
+  .chk{display:inline-flex;align-items:center;gap:8px;color:var(--ink-body);font-size:.9rem}
+  .q__foot{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0 10px}
+  .q__foot .grow{flex:1}
+  .hint{color:var(--ink-faint);font-size:.78rem;margin-top:4px}
+  .savebar{position:sticky;bottom:0;background:linear-gradient(to top,var(--bg-deep),rgba(3,6,21,.6) 70%,transparent);padding:16px 0;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login" id="loginView">
+  <div class="login__card">
+    <div class="brand"><div class="brand__mark">MBM</div><div class="brand__name">Master<br>Business<br>Mentoring</div></div>
+    <h1>Painel de administração</h1>
+    <p class="sub">Acesso restrito à equipe MBM.</p>
+    <form id="loginForm">
+      <div class="field"><label for="email">E-mail</label><input class="inp" id="email" type="email" autocomplete="username" required></div>
+      <div class="field"><label for="senha">Senha</label><input class="inp" id="senha" type="password" autocomplete="current-password" required></div>
+      <button class="btn" id="loginBtn" type="submit" style="width:100%">Entrar</button>
+      <div class="msg err" id="loginMsg"></div>
+    </form>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="wrap" id="appView" hidden>
+  <div class="top">
+    <div class="brand" style="margin:0"><div class="brand__mark">MBM</div><div class="brand__name">Master<br>Business<br>Mentoring</div></div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <span class="top__user" id="whoami"></span>
+      <button class="btn btn--ghost btn--sm" id="btnConta">Conta</button>
+      <button class="btn btn--ghost btn--sm" id="btnSair">Sair</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab is-on" data-tab="respostas">Respostas</button>
+    <button class="tab" data-tab="perguntas">Perguntas</button>
+  </div>
+
+  <!-- RESPOSTAS -->
+  <section id="tab-respostas">
+    <div class="bar">
+      <span class="count" id="respCount">—</span>
+      <input class="inp search" id="respSearch" placeholder="Buscar (nome, mentoria, CPF…)">
+      <span class="grow"></span>
+      <button class="btn btn--ghost btn--sm" id="btnReload">Atualizar</button>
+      <button class="btn btn--sm" id="btnCsv">Exportar CSV</button>
+    </div>
+    <div class="tablewrap">
+      <table id="respTable"><thead></thead><tbody></tbody></table>
+    </div>
+  </section>
+
+  <!-- PERGUNTAS -->
+  <section id="tab-perguntas" hidden>
+    <div class="bar">
+      <span class="count" id="pergCount">—</span>
+      <span class="grow"></span>
+      <button class="btn btn--ghost btn--sm" id="btnNova">+ Nova pergunta</button>
+    </div>
+    <div id="pergList"></div>
+    <div class="savebar">
+      <button class="btn" id="btnSalvar">Salvar alterações</button>
+      <button class="btn btn--ghost btn--sm" id="btnDescartar">Descartar</button>
+      <span class="msg" id="pergMsg"></span>
+    </div>
+    <p class="hint" style="margin-top:16px">As alterações entram no formulário ao vivo assim que você salvar. O formulário tem uma cópia de segurança embutida caso o banco fique indisponível.</p>
+  </section>
+</div>
+
+<!-- CONTA (modal simples) -->
+<div class="login" id="contaView" hidden>
+  <div class="login__card">
+    <h1 style="font-size:1.5rem">Trocar senha</h1>
+    <p class="sub">Defina uma nova senha para o seu acesso.</p>
+    <div class="field"><label for="novaSenha">Nova senha</label><input class="inp" id="novaSenha" type="password" minlength="6" autocomplete="new-password"></div>
+    <div style="display:flex;gap:10px"><button class="btn" id="btnTrocar">Salvar</button><button class="btn btn--ghost" id="btnVoltarConta">Voltar</button></div>
+    <div class="msg" id="contaMsg"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+const SUPA_URL = "https://avhhreybvcbgqacbvjgm.supabase.co";
+const SUPA_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2aGhyZXlidmNiZ3FhY2J2amdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwODgyMDQsImV4cCI6MjA5MzY2NDIwNH0.h_RkqqnXVfo-a_rSEdQ64Gfn599Jx9E8adTEwQU3QJI";
+const sb = supabase.createClient(SUPA_URL, SUPA_ANON);
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+
+/* colunas exibidas na tabela de respostas (col do banco -> rótulo) */
+const COLS = [
+  ["created_at","Data"], ["nome_completo","Nome"], ["cpf","CPF"],
+  ["mentoria","Mentoria"], ["nicho","Nicho"], ["formato_entrega","Formato"],
+  ["ticket_medio","Ticket"], ["mentorados_ativos","Ativos"],
+  ["faturamento_2025","Fat. 2025"], ["faturamento_2026","Fat. 2026"],
+  ["atribuicao_mentor_lideres","Atrib. M. Líderes"], ["projecao_2026","Projeção 2026"],
+  ["intencao_parceria","Parceria PV"], ["metas","Metas"], ["desafios","Desafios"],
+  ["confirma_interbusiness","InterBusiness"],
+];
+let RESP = [];
+
+/* ---------------- auth ---------------- */
+async function boot() {
+  const { data } = await sb.auth.getSession();
+  if (data.session) showApp(data.session); else showLogin();
+}
+function showLogin(){ $("#appView").hidden = true; $("#contaView").hidden = true; $("#loginView").hidden = false; }
+function showApp(session){
+  $("#loginView").hidden = true; $("#contaView").hidden = true; $("#appView").hidden = false;
+  $("#whoami").textContent = session.user.email;
+  loadRespostas(); loadPerguntas();
+}
+
+$("#loginForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const btn = $("#loginBtn"), msg = $("#loginMsg");
+  msg.className = "msg err"; msg.textContent = ""; btn.disabled = true; btn.textContent = "Entrando…";
+  const { data, error } = await sb.auth.signInWithPassword({ email: $("#email").value.trim(), password: $("#senha").value });
+  btn.disabled = false; btn.textContent = "Entrar";
+  if (error) { msg.textContent = "E-mail ou senha inválidos."; return; }
+  showApp(data.session);
+});
+$("#btnSair").onclick = async () => { await sb.auth.signOut(); showLogin(); };
+$("#btnConta").onclick = () => { $("#appView").hidden = true; $("#contaView").hidden = false; };
+$("#btnVoltarConta").onclick = () => { $("#contaView").hidden = true; $("#appView").hidden = false; };
+$("#btnTrocar").onclick = async () => {
+  const msg = $("#contaMsg"); msg.className="msg"; msg.textContent="";
+  const p = $("#novaSenha").value;
+  if (!p || p.length < 6) { msg.className="msg err"; msg.textContent="Mínimo de 6 caracteres."; return; }
+  const { error } = await sb.auth.updateUser({ password: p });
+  if (error) { msg.className="msg err"; msg.textContent="Não foi possível: "+error.message; return; }
+  msg.className="msg ok"; msg.textContent="Senha atualizada."; $("#novaSenha").value="";
+};
+
+/* ---------------- tabs ---------------- */
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("is-on"));
+  t.classList.add("is-on");
+  $("#tab-respostas").hidden = t.dataset.tab !== "respostas";
+  $("#tab-perguntas").hidden = t.dataset.tab !== "perguntas";
+});
+
+/* ---------------- respostas ---------------- */
+function fmtVal(col, v){
+  if (v == null || v === "") return "";
+  if (col === "created_at") return new Date(v).toLocaleString("pt-BR");
+  if (Array.isArray(v)) return v.map(x=>`<span class="tag">${esc(x)}</span>`).join("");
+  return esc(v);
+}
+async function loadRespostas(){
+  $("#respCount").textContent = "Carregando…";
+  const { data, error } = await sb.from("mbm_respostas").select("*").order("created_at",{ascending:false});
+  if (error) { $("#respCount").textContent = "Erro ao carregar: "+error.message; return; }
+  RESP = data || [];
+  renderRespostas();
+}
+function renderRespostas(){
+  const q = $("#respSearch").value.trim().toLowerCase();
+  const rows = !q ? RESP : RESP.filter(r => JSON.stringify(r).toLowerCase().includes(q));
+  $("#respCount").textContent = `${rows.length} resposta(s)` + (q ? ` (de ${RESP.length})` : "");
+  const thead = $("#respTable thead"), tbody = $("#respTable tbody");
+  thead.innerHTML = "<tr>" + COLS.map(c=>`<th>${esc(c[1])}</th>`).join("") + "</tr>";
+  if (!rows.length){ tbody.innerHTML = `<tr><td colspan="${COLS.length}"><div class="empty">Nenhuma resposta ainda.</div></td></tr>`; return; }
+  tbody.innerHTML = rows.map(r => "<tr>" + COLS.map(c=>{
+    const long = ["metas","desafios","nicho","atribuicao_mentor_lideres"].includes(c[0]);
+    return `<td class="${long?'wrap':''}">${fmtVal(c[0], r[c[0]])}</td>`;
+  }).join("") + "</tr>").join("");
+}
+$("#respSearch").addEventListener("input", renderRespostas);
+$("#btnReload").onclick = loadRespostas;
+$("#btnCsv").onclick = () => {
+  const rows = RESP;
+  const header = COLS.map(c=>c[1]);
+  const esc2 = v => { const s = Array.isArray(v) ? v.join(" | ") : (v==null?"":String(v)); return '"' + s.replace(/"/g,'""') + '"'; };
+  const lines = [header.join(",")].concat(rows.map(r => COLS.map(c => esc2(c[0]==="created_at" && r[c[0]] ? new Date(r[c[0]]).toLocaleString("pt-BR") : r[c[0]])).join(",")));
+  const blob = new Blob(["﻿"+lines.join("\r\n")], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+  a.download = `respostas-mbm-${new Date().toISOString().slice(0,10)}.csv`; a.click();
+};
+
+/* ---------------- perguntas ---------------- */
+let PERG = [];       // estado editável
+let PERG_IDS = [];   // ids originais (para detectar exclusões)
+const TYPES = [["text","Texto curto"],["long","Texto longo"],["single","Escolha única"],["multi","Múltipla escolha"],["statement","Aviso (sem resposta)"],["end","Tela final"]];
+
+async function loadPerguntas(){
+  const { data, error } = await sb.from("mbm_perguntas").select("*").order("ordem",{ascending:true});
+  if (error) { $("#pergMsg").className="msg err"; $("#pergMsg").textContent="Erro ao carregar: "+error.message; return; }
+  PERG = (data||[]).map(r => ({...r, options: Array.isArray(r.options) ? r.options : (r.options||[]) }));
+  PERG_IDS = PERG.map(p=>p.id);
+  renderPerguntas();
+}
+function renderPerguntas(){
+  $("#pergCount").textContent = `${PERG.length} pergunta(s)`;
+  const host = $("#pergList"); host.innerHTML = "";
+  PERG.forEach((p, i) => {
+    const el = document.createElement("div");
+    el.className = "q" + (p.ativo ? "" : " inativa");
+    const needsOpts = p.type === "single" || p.type === "multi";
+    el.innerHTML = `
+      <div class="q__head">
+        <span class="q__ord">${i+1}</span>
+        <select class="inp btn--sm q__type-sel" data-k="type" style="width:auto">
+          ${TYPES.map(t=>`<option value="${t[0]}" ${p.type===t[0]?"selected":""}>${t[1]}</option>`).join("")}
+        </select>
+        <span class="q__grow"></span>
+        <button class="btn btn--ghost btn--sm" data-act="up" ${i===0?"disabled":""}>↑</button>
+        <button class="btn btn--ghost btn--sm" data-act="down" ${i===PERG.length-1?"disabled":""}>↓</button>
+        <button class="btn btn--danger btn--sm" data-act="del">Excluir</button>
+      </div>
+      <div class="grid">
+        <div class="full"><label class="lbl">Título / enunciado</label><input class="inp" data-k="title" value="${esc(p.title)}"></div>
+        <div class="full"><label class="lbl">Descrição de apoio (help)</label><input class="inp" data-k="help" value="${esc(p.help)}"></div>
+        ${p.type==="statement" ? `<div class="full"><label class="lbl">Rótulo pequeno (eyebrow)</label><input class="inp" data-k="eyebrow" value="${esc(p.eyebrow)}"></div>` : ""}
+        ${p.type==="multi" ? `<div class="full"><label class="lbl">Nota da múltipla escolha</label><input class="inp" data-k="note" value="${esc(p.note)}"></div>` : ""}
+        ${needsOpts ? `<div class="full"><label class="lbl">Opções (uma por linha)</label><textarea class="inp ta" data-k="options" rows="4">${esc((p.options||[]).join("\n"))}</textarea></div>` : ""}
+        <div><label class="lbl">Coluna no banco (field)</label><input class="inp" data-k="field" value="${esc(p.field)}" placeholder="ex.: nome_completo"></div>
+        <div><label class="lbl">Rótulo do botão (cta)</label><input class="inp" data-k="cta" value="${esc(p.cta)}" placeholder="OK / Continuar / Enviar"></div>
+      </div>
+      <div class="q__foot">
+        <label class="chk"><input type="checkbox" data-k="required" ${p.required?"checked":""}> Obrigatória</label>
+        <label class="chk"><input type="checkbox" data-k="numeric" ${p.numeric?"checked":""}> Teclado numérico</label>
+        <label class="chk"><input type="checkbox" data-k="ativo" ${p.ativo?"checked":""}> Ativa</label>
+        <span class="grow"></span>
+        <span class="hint">id: ${esc(p.qid)}</span>
+      </div>`;
+    // binds
+    el.querySelectorAll("[data-k]").forEach(inp => {
+      const k = inp.dataset.k;
+      const ev = (inp.type==="checkbox") ? "change" : "input";
+      inp.addEventListener(ev, () => {
+        if (inp.type==="checkbox") p[k] = inp.checked;
+        else if (k==="options") p[k] = inp.value.split("\n").map(s=>s.trim()).filter(Boolean);
+        else p[k] = inp.value;
+        if (k==="type"){ p.type = inp.value; renderPerguntas(); }
+        if (k==="ativo") el.classList.toggle("inativa", !inp.checked);
+      });
+    });
+    el.querySelector('[data-act="up"]').onclick = () => { if(i>0){ [PERG[i-1],PERG[i]]=[PERG[i],PERG[i-1]]; renderPerguntas(); } };
+    el.querySelector('[data-act="down"]').onclick = () => { if(i<PERG.length-1){ [PERG[i+1],PERG[i]]=[PERG[i],PERG[i+1]]; renderPerguntas(); } };
+    el.querySelector('[data-act="del"]').onclick = () => { if(confirm("Excluir esta pergunta?")){ PERG.splice(i,1); renderPerguntas(); } };
+    host.appendChild(el);
+  });
+}
+$("#btnNova").onclick = () => {
+  PERG.push({ id:null, qid:"nova_"+Date.now().toString(36), type:"text", title:"Nova pergunta", help:null, eyebrow:null, note:null, options:[], required:false, numeric:false, cta:null, field:null, ativo:true });
+  renderPerguntas();
+  window.scrollTo(0, document.body.scrollHeight);
+};
+$("#btnDescartar").onclick = loadPerguntas;
+$("#btnSalvar").onclick = async () => {
+  const msg = $("#pergMsg"); msg.className="msg"; msg.textContent="Salvando…";
+  // reatribui ordem conforme posição atual
+  const payload = PERG.map((p, i) => ({
+    id: p.id || undefined,
+    ordem: i+1, qid: p.qid, type: p.type,
+    title: p.title || null, help: p.help || null, eyebrow: p.eyebrow || null, note: p.note || null,
+    options: (p.type==="single"||p.type==="multi") ? (p.options||[]) : null,
+    required: !!p.required, numeric: !!p.numeric, cta: p.cta || null, field: p.field || null,
+    ativo: p.ativo !== false, updated_at: new Date().toISOString()
+  }));
+  // exclui as removidas
+  const keepIds = payload.filter(p=>p.id).map(p=>p.id);
+  const toDelete = PERG_IDS.filter(id => !keepIds.includes(id));
+  try {
+    if (toDelete.length){ const { error } = await sb.from("mbm_perguntas").delete().in("id", toDelete); if(error) throw error; }
+    const { error } = await sb.from("mbm_perguntas").upsert(payload, { onConflict:"id" }); if(error) throw error;
+    msg.className="msg ok"; msg.textContent="Alterações salvas. O formulário já está atualizado.";
+    await loadPerguntas();
+  } catch(e){ msg.className="msg err"; msg.textContent="Erro ao salvar: "+(e.message||e); }
+};
+
+boot();
+</script>
+</body>
+</html>

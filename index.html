@@ -254,7 +254,7 @@ const SUPABASE = {
      field    : COLUNA no Supabase onde grava (o que impede o dado de se perder)
    "statement" só avança; "end" encerra e dispara o envio.
    ================================================================ */
-const QUESTIONS = [
+const QUESTIONS_FALLBACK = [
   { id:"nome", type:"text", required:true, field:"nome_completo",
     title:"Qual é o seu nome completo?" },
   { id:"cpf", type:"text", numeric:true, required:true, field:"cpf",
@@ -306,6 +306,8 @@ const QUESTIONS = [
     title:"Obrigado por responder!",
     help:"As suas respostas nos ajudam a personalizar a sua jornada no Master Business Mentoring. O seu Consultor entrará em contato com os próximos passos." },
 ];
+// QUESTIONS começa pela cópia embutida; se o banco responder, é substituída pelas perguntas de lá.
+let QUESTIONS = QUESTIONS_FALLBACK;
 
 /* ---------------- motor ---------------- */
 const frame = document.getElementById("frame");
@@ -316,9 +318,11 @@ const LETTERS = "ABCDEFGHIJ";
 const answers = {};
 let idx = 0;
 
-const displayNo = [];
-let n = 0;
-QUESTIONS.forEach(q => displayNo.push(q.type === "statement" || q.type === "end" ? null : ++n));
+let displayNo = [];
+function computeNos(){
+  displayNo = []; let n = 0;
+  QUESTIONS.forEach(q => displayNo.push(q.type === "statement" || q.type === "end" ? null : ++n));
+}
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;" }[c]));
 
@@ -487,7 +491,31 @@ navDown.onclick = () => {
 };
 navUp.onclick = prev;
 
-render();
+/* ---- carrega as perguntas do banco (com fallback na cópia embutida) ---- */
+async function carregarPerguntas(){
+  try{
+    const res = await fetch(`${SUPABASE.url}/rest/v1/mbm_perguntas?select=*&ativo=eq.true&order=ordem.asc`, {
+      headers: { "apikey": SUPABASE.anon, "Authorization": `Bearer ${SUPABASE.anon}` }
+    });
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    const rows = await res.json();
+    if(!Array.isArray(rows) || !rows.length) return null;
+    return rows.map(r => ({
+      id: r.qid, type: r.type, title: r.title,
+      help: r.help || undefined, eyebrow: r.eyebrow || undefined, note: r.note || undefined,
+      options: Array.isArray(r.options) ? r.options : undefined,
+      required: !!r.required, numeric: !!r.numeric,
+      cta: r.cta || undefined, field: r.field || undefined
+    }));
+  }catch(e){ console.warn("[MBM] usando perguntas embutidas (fallback):", e); return null; }
+}
+async function iniciar(){
+  const doBanco = await carregarPerguntas();
+  if (doBanco) QUESTIONS = doBanco;
+  computeNos();
+  render();
+}
+iniciar();
 </script>
 </body>
 </html>
